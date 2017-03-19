@@ -27,7 +27,7 @@
 # For more information, please refer to <http://unlicense.org>
 
 BEGIN {
-	FS = "[@\\(\\)]";
+	FS = "[\\(\\)]";
 	regex_constant	= "[[:digit:]]+";
 	regex_symbol	= "[_[:alpha:]\\.\\$:][_[:alnum:]\\.\\$:]*";
 	regex_labeldef	= "^\\(" regex_symbol "\\)$";
@@ -124,12 +124,13 @@ NR != FNR {
 	else if (substr($0, 1, 1) == "@") {
 		# A-instruction
 		instruction = 0;
+		value = substr($0, 2);
 
 		if (match($0, regex_aconstant)) {
-			instruction = $1;
+			instruction = value;
 		}
 		else if (match($0, regex_asymbol)) {
-			instruction = ($1 in symbols) ? symbols[$1] : (symbols[$1] = variable++);
+			instruction = (value in symbols) ? symbols[value] : (symbols[value] = variable++);
 		}
 		else {
 			printf(err_invalid_instruction err_ors, FILENAME, FNR, "A", $0) >> "/dev/stderr";
