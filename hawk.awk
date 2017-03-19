@@ -179,6 +179,9 @@ NR != FNR {
 				dest = "";
 			}
 		}
+		else {
+			dest = "";
+		}
 		if (index(dest, "A")) {
 			instruction += 32; # 1 << 5 (d1)
 		}
@@ -201,7 +204,10 @@ NR != FNR {
 				instruction += 4096; # 1 << 12 (a)
 			}
 
-			compindex = a ? sub("M", "A", comp) : comp;
+			compindex = comp;
+			if (a) {
+				sub("M", "A", compindex);
+			}
 			if (compindex in comptable) {
 				instruction += comptable[compindex];
 			}
@@ -218,6 +224,9 @@ NR != FNR {
 				printf(err_empty_field err_ors, FILENAME, FNR, "C", $0, "jump") >> "/dev/stderr";
 				if (errorcount < 126) errorcount++;
 			}
+		}
+		else {
+			jump = "";
 		}
 		if (jump in jumptable) {
 			instruction += jumptable[jump];
