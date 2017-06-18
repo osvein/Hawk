@@ -17,9 +17,9 @@ ASCII encoded hexadecimals, rather than the ASCII encoded binary format
 described by the book. The format from the book can be achieved by piping the
 output into bc:
 
-    $ ./hawk.awk Prog.asm Prog.asm | cat <(echo "ibase=16;obase=2") - | bc | awk '{printf("%016d\n",$0)}'
+    $ { echo "ibase=16;obase=2"; ./hawk.awk Prog.asm Prog.asm; } | bc | awk '{printf("%016d\n",$0)}'
 
 The last awk command can also be modified to split the output every 4 bits for
 readability:
 
-    $ ./hawk.awk Prog.asm Prog.asm | cat <(echo "ibase=16;obase=2") - | bc | awk '{$0=sprintf("%016d",$0);gsub(".{4}","& ")}'
+    $ { echo "ibase=16;obase=2"; ./hawk.awk Prog.asm Prog.asm; } | bc | awk '{$0=sprintf("%016d",$0); gsub(".a{4}","& ")}'
