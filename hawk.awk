@@ -64,7 +64,6 @@ BEGIN {
 	comptable["D&A"]	= 0;	# 000000 << 6 (c6)
 	comptable["D|A"]	= 1344;	# 010101 << 6 (c6)
 
-	jumptable[""]	= 0; # 000
 	jumptable["JGT"]	= 1; # 001
 	jumptable["JEQ"]	= 2; # 010
 	jumptable["JGE"]	= 3; # 011
