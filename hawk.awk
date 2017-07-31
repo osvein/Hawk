@@ -80,8 +80,8 @@ BEGIN {
 
 	# Predefined labels
 	# general purpose registers (R0-R15)
-	for (i = 0; i < 16; i++) {
-		symbols["R" i] = i;
+	for (varaddr = 0; varaddr < 16; varaddr++) {
+		symbols["R" varaddr] = varaddr;
 	}
 	symbols["SP"]	= 0; # stack pointer
 	symbols["LCL"]	= 1; # local variable pointer
@@ -130,7 +130,7 @@ NR != FNR {
 			instruction = value;
 		}
 		else if (match($0, regex_asymbol)) {
-			instruction = (value in symbols) ? symbols[value] : (symbols[value] = variable++);
+			instruction = (value in symbols) ? symbols[value] : (symbols[value] = varaddr++);
 		}
 		else {
 			printf(err_invalid_instruction err_ors, FILENAME, FNR, "A", $0) >> "/dev/stderr";
