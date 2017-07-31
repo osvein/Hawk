@@ -80,7 +80,7 @@ BEGIN {
 
 	# Predefined labels
 	# general purpose registers (R0-R15)
-	for (variable = 0; variable < 16; variable++) {
+	for (i = 0; i < 16; i++) {
 		symbols["R" i] = i;
 	}
 	symbols["SP"]	= 0; # stack pointer
@@ -241,5 +241,5 @@ NR != FNR {
 }
 
 END {
-	if (errorcount > 0) exit(retval);
+	if (errorcount > 0) exit(errorcount);
 }
