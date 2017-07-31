@@ -26,7 +26,8 @@
 #
 # For more information, please refer to <http://unlicense.org>
 
-BEGIN {
+BEGIN
+{
 	FS = "[()]";
 	regex_constant	= "[[:digit:]]+";
 	regex_symbol	= "[_[:alpha:]\\.\\$:][_[:alnum:]\\.\\$:]*";
@@ -91,6 +92,8 @@ BEGIN {
 	symbols["KBD"]	= 24576; # memory mapped keybaord (0x6000)
 }
 
+NR == 1 { ARGV[ARGC++] = FILENAME; }
+
 # Common for both passes
 {
 	sub("//.*", ""); # Remove comments
@@ -119,7 +122,8 @@ firstchar == "("
 }
 
 # Second pass
-NR != FNR {
+NR != FNR
+{
 	if ($0 == "" || match($0, regex_labeldef)) {
 		# comment, label symbol definition or empty line, doesn't generate code
 		next;
@@ -217,6 +221,7 @@ NR != FNR {
 	printf("%04X\n", instruction);
 }
 
-END {
+END
+{
 	if (errorcount > 0) exit(errorcount);
 }

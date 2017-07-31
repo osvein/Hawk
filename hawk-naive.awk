@@ -76,6 +76,8 @@ BEGIN {
 	symbols["KBD"]	= 24576; # memory mapped keybaord (0x6000)
 }
 
+NR == 1 { ARGV[ARGC++] = FILENAME; }
+
 # Common for both passes
 {
 	sub("//.*", ""); # Remove comments
