@@ -111,7 +111,7 @@ firstchar == "("
 	if (NR == FNR) {
 		if ($2 in symbols) {
 			printf(err_label_redefined err_ors, FILENAME, FNR, $2) >> "/dev/stderr";
-			if (errorcount < 126) errorcount++;
+			errorcount++;
 		}
 		symbols[$2] = FNR - line_address_offset++;
 	}
@@ -137,12 +137,12 @@ NR != FNR {
 		}
 		else {
 			printf(err_invalid_instruction err_ors, FILENAME, FNR, "A", $0) >> "/dev/stderr";
-			if (errorcount < 126) errorcount++;
+			errorcount++;
 		}
 
 		if (instruction >= 32768) { # 1000 0000 0000 0000
 			printf(err_out_of_range err_ors, FILENAME, FNR, "A", $0, instruction) >> "/dev/stderr";
-			if (errorcount < 126) errorcount++;
+			errorcount++;
 		}
 	}
 	else {
@@ -156,7 +156,7 @@ NR != FNR {
 		# returns 0), which is the case we're trying to catch and handle
 		if (eqindex == scindex) {
 			printf(err_missing_field err_ors, FILENAME, FNR, "C", $0, "dest or jump") >> "/dev/stderr";
-			if (errorcount < 126) errorcount++;
+			errorcount++;
 		}
 
 		# dest field
@@ -164,11 +164,11 @@ NR != FNR {
 			dest = substr($0, 1, eqindex - 1);
 			if (dest == "") {
 				printf(err_empty_field err_ors, FILENAME, FNR, "C", $0, "dest") >> "/dev/stderr";
-				if (errorcount < 126) errorcount++;
+				errorcount++;
 			}
 			else if (!match(dest, "^A?M?D?$")) {
 				printf(err_invalid_field err_ors, FILENAME, FNR, "C", $0, "dest", dest) >> "/dev/stderr";
-				if (errorcount < 126) errorcount++;
+				errorcount++;
 			}
 			else {
 				if (index(dest, "A")) instruction += 32; # 1 << 5 (d1)
@@ -181,7 +181,7 @@ NR != FNR {
 		comp = scindex ? substr($0, eqindex + 1, scindex - eqindex - 1) : substr($0, eqindex + 1);
 		if (comp == "") {
 			printf(err_empty_field err_ors, FILENAME, FNR, "C", $0, "comp") >> "/dev/stderr";
-			if (errorcount < 126) errorcount++;
+			errorcount++;
 		}
 		else {
 			# make changes in separate variable
@@ -194,7 +194,7 @@ NR != FNR {
 			}
 			else {
 				printf(err_invalid_field err_ors, FILENAME, FNR, "C", $0, "comp", comp) >> "/dev/stderr";
-				if (errorcount < 126) errorcount++;
+				errorcount++;
 			}
 		}
 
@@ -203,14 +203,14 @@ NR != FNR {
 			jump = substr($0, scindex + 1);
 			if (jump == "") {
 				printf(err_empty_field err_ors, FILENAME, FNR, "C", $0, "jump") >> "/dev/stderr";
-				if (errorcount < 126) errorcount++;
+				errorcount++;
 			}
 			if (jump in jumptable) {
 				instruction += jumptable[jump];
 			}
 			else {
 				printf(err_invalid_field err_ors, FILENAME, FNR, "C", $0, "jump", jump) >> "/dev/stderr";
-				if (errorcount < 126) errorcount++;
+				errorcount++;
 			}
 		}
 	}
