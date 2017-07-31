@@ -1,5 +1,5 @@
 #!/bin/awk -f
-# Assembler for the educational Hack architecture
+# hawk - strict and verbose assembler for the educational Hack architecture
 
 # This is free and unencumbered software released into the public domain.
 #
@@ -27,7 +27,7 @@
 # For more information, please refer to <http://unlicense.org>
 
 BEGIN {
-	FS = "[\\(\\)]";
+	FS = "[()]";
 	regex_constant	= "[[:digit:]]+";
 	regex_symbol	= "[_[:alpha:]\\.\\$:][_[:alnum:]\\.\\$:]*";
 	regex_labeldef	= "^\\(" regex_symbol "\\)$";
@@ -73,7 +73,7 @@ BEGIN {
 	jumptable["JLE"]	= 6; # 110
 	jumptable["JMP"]	= 7; # 111
 
-	# incremented by lines that don't generate code
+	# incremented on first pass by lines that don't generate code
 	# address = line - offset
 	# initially 1 because line numbers start at 1 while addressing starts at 0
 	line_address_offset = 1;
@@ -90,29 +90,33 @@ BEGIN {
 	symbols["THAT"]	= 4; # array pointer
 	symbols["SCREEN"]	= 16384; # memory mapped screen (0x4000)
 	symbols["KBD"]	= 24576; # memory mapped keybaord (0x6000)
-
-	errorcount = 0;
 }
 
 # Common for both passes
 {
-	gsub("([[:space:]]|//.*)", ""); # Remove whitespace and comments
+	sub("//.*", ""); # Remove comments
+	gsub("[[:space:]]", ""); # Remove whitespace
+	firstchar = substr($0, 1, 1);
 }
 
-# First pass (create label symbol table)
-NR == FNR {
-	if ($0 == "") {
-		# empty line, doesn't generate code
-		line_address_offset++;
-	}
-	else if (match($0, regex_labeldef)) {
-		# label symbol definition, doesn't generate code
+$0 == ""
+{
+	# empty line, doesn't generate code
+	line_address_offset++;
+	next;
+}
+
+firstchar == "("
+{
+	# label symbol definition, doesn't generate code
+	if (NR == FNR) {
 		if ($2 in symbols) {
 			printf(err_label_redefined err_ors, FILENAME, FNR, $2) >> "/dev/stderr";
 			if (errorcount < 126) errorcount++;
 		}
 		symbols[$2] = FNR - line_address_offset++;
 	}
+	next;
 }
 
 # Second pass
@@ -145,16 +149,6 @@ NR != FNR {
 	else {
 		# C-instruction
 		instruction = 57344; # 1110 0000 0000 0000
-
-		if (!match($0, "^(.*=)?.*(;.*)?$")) {
-			# this line is so messed up there's no point in trying to figure out
-			# what's wrong with it
-			printf(err_invalid_instruction err_ors, FILENAME, FNR, "C", $0) >> "/dev/stderr";
-			if (errorcount < 126) errorcount++;
-			print "1110""0000""0000""000";
-			next;
-		}
-
 		eqindex = index($0, "=");
 		scindex = index($0, ";");
 
@@ -176,38 +170,26 @@ NR != FNR {
 			else if (!match(dest, "^A?M?D?$")) {
 				printf(err_invalid_field err_ors, FILENAME, FNR, "C", $0, "dest", dest) >> "/dev/stderr";
 				if (errorcount < 126) errorcount++;
-				dest = "";
 			}
-		}
-		else {
-			dest = "";
-		}
-		if (index(dest, "A")) {
-			instruction += 32; # 1 << 5 (d1)
-		}
-		if (index(dest, "D")) {
-			instruction += 16; # 1 << 4 (d2)
-		}
-		if (index(dest, "M")) {
-			instruction += 8; # 1 << 3 (d3)
+			else {
+				if (index(dest, "A")) instruction += 32; # 1 << 5 (d1)
+				if (index(dest, "D")) instruction += 16; # 1 << 4 (d2)
+				if (index(dest, "M")) instruction += 8; # 1 << 3 (d3)
+			}
 		}
 
 		# comp field
 		comp = scindex ? substr($0, eqindex + 1, scindex - eqindex - 1) : substr($0, eqindex + 1);
 		if (comp == "") {
-			printf(err_missing_field err_ors, FILENAME, FNR, "C", $0, "comp") >> "/dev/stderr";
+			printf(err_empty_field err_ors, FILENAME, FNR, "C", $0, "comp") >> "/dev/stderr";
 			if (errorcount < 126) errorcount++;
 		}
 		else {
-			a = index(comp, "M");
-			if (a) {
-				instruction += 4096; # 1 << 12 (a)
-			}
-
+			# make changes in separate variable
+			# because we might want to present the unchanged field to the user in case of an error
 			compindex = comp;
-			if (a) {
-				sub("M", "A", compindex);
-			}
+			if (sub("M", "A", compindex) instruction += 4096; # 1 << 12 (a);
+
 			if (compindex in comptable) {
 				instruction += comptable[compindex];
 			}
@@ -224,19 +206,15 @@ NR != FNR {
 				printf(err_empty_field err_ors, FILENAME, FNR, "C", $0, "jump") >> "/dev/stderr";
 				if (errorcount < 126) errorcount++;
 			}
-		}
-		else {
-			jump = "";
-		}
-		if (jump in jumptable) {
-			instruction += jumptable[jump];
-		}
-		else {
-			printf(err_invalid_field err_ors, FILENAME, FNR, "C", $0, "jump", jump) >> "/dev/stderr";
-			if (errorcount < 126) errorcount++;
+			if (jump in jumptable) {
+				instruction += jumptable[jump];
+			}
+			else {
+				printf(err_invalid_field err_ors, FILENAME, FNR, "C", $0, "jump", jump) >> "/dev/stderr";
+				if (errorcount < 126) errorcount++;
+			}
 		}
 	}
-
 	printf("%04X\n", instruction);
 }
 
